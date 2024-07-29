@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pprint
 from PIL import Image
-from src.base_page.base_page import BasePage
 
 
 class ScreenshotComparator(BasePage):

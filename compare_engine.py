@@ -22,6 +22,43 @@ class ScreenshotComparator(BasePage):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     threshold = 0.1
 
+    def _generate_filename_from_locator(self, locator):
+        import re
+        _, xpath = locator
+        class_match = re.search(r"@class='([^']*)'", xpath)
+        id_match = re.search(r"@id='([^']*)'", xpath)
+
+        if class_match:
+            class_name = class_match.group(1)
+            filename = re.sub(r'[^\w\-_\. ]', '', class_name).replace(' ', '-')
+            return f"{filename}.png"
+        elif id_match:
+            id_name = id_match.group(1)
+            filename = re.sub(r'[^\w\-_\. ]', '', id_name).replace(' ', '-')
+            return f"{filename}.png"
+        else:
+            raise ValueError('Neither class name nor id found.')
+
+
+    def get_element_screenshot(self, locator, timeout=10):
+        element = WebDriverWait(self.driver, timeout).until(
+            EC.presence_of_element_located(locator)
+        )
+        return element.screenshot_as_png
+
+    def capture_element_screenshot(self, locator, directory):
+        from pathlib import Path
+        element_png = self.get_element_screenshot(locator)
+        image = Image.open(io.BytesIO(element_png))
+
+        filename = self._generate_filename_from_locator(locator)
+
+        project_root = Path(os.getcwd()).parent
+        full_directory = project_root / 'screenshots' / 'other_folder' / directory
+        full_directory.mkdir(parents=True, exist_ok=True)
+        full_path = full_directory / filename
+        image.save(full_path, 'png')
+
     def get_list_of_images(self, folder_path):
         return [f for f in os.listdir(f'{self.project_root}/{folder_path}') if f.lower().endswith('.png')]
 
